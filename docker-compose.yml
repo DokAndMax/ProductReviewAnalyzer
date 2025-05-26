@@ -1,0 +1,160 @@
+services:
+  # ---------- інфраструктура ----------
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
+    networks:
+      - review-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: analysisdb
+      POSTGRES_USER: analysis
+      POSTGRES_PASSWORD: analysis
+    volumes: [ "postgres-data:/var/lib/postgresql/data" ]
+    ports: [ "5432:5432" ]
+    restart: unless-stopped
+    networks:
+      - review-net
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Your_password123"
+      MSSQL_PID: "Express"
+    ports: [ "1433:1433" ]
+    volumes: [ "mssql-data:/var/opt/mssql" ]
+    restart: unless-stopped
+    networks:
+      - review-net
+
+  mongo:
+    image: mongo:7-jammy
+    container_name: mongo
+    ports: [ "27017:27017" ]
+    volumes: [ "mongo-data:/data/db" ]
+    restart: unless-stopped
+    networks:
+      - review-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports: [ "6379:6379" ]
+    restart: unless-stopped
+    networks:
+      - review-net
+
+  # ---------- мікросервіси ----------
+  analysisservice:
+    build:
+      context: .
+      dockerfile: AnalysisService/AnalysisService.API/Dockerfile
+    env_file: .env
+    environment:
+      - ConnectionStrings__RabbitMQ=${RABBITMQ_URI}
+      - ConnectionStrings__Postgres=${ANALYSIS_DB_URI}
+      - OpenAI__ApiKey=${OPENAI_API_KEY}
+      - OpenAI__Model=${OPENAI_MODEL}
+    depends_on: [ rabbitmq, postgres ]
+    restart: unless-stopped
+    networks:
+      - review-net
+
+  historyservice:
+    build:
+      context: .
+      dockerfile: HistoryService/HistoryService.API/Dockerfile
+    env_file: .env
+    environment:
+      - ConnectionStrings__SqlServer=${HISTORY_SQL_URI}
+    depends_on: [ sqlserver ]
+    restart: unless-stopped
+    networks:
+      - review-net
+
+  scraper-rozetka:
+    build:
+      context: .
+      dockerfile: ReviewsScraper.Rozetka/Dockerfile
+    env_file: .env
+    environment:
+      - RabbitMq__Host=${RABBITMQ_HOST}
+      - RabbitMq__Username=${RABBITMQ_USER}
+      - RabbitMq__Password=${RABBITMQ_PASS}
+      - ConnectionStrings__SqlServer=${ROZETKA_SQL_URI}
+      - RozetkaApi__BaseUrl=${ROZETKA_API_BASE_URL}
+      - Cache__Redis=${REDIS_URI}
+    depends_on: [ sqlserver, rabbitmq, redis ]
+    restart: unless-stopped
+    networks:
+      - review-net
+
+  tableauexporter:
+    build:
+      context: .
+      dockerfile: TableauExporterService/TableauExporterService.API/Dockerfile
+    env_file: .env
+    environment:
+      - ConnectionStrings__RabbitMQ=${RABBITMQ_URI}
+      - ConnectionStrings__Mongo=${MONGO_URI}
+      - Tableau__ApiToken=${TABLEAU_API_TOKEN}
+      - Tableau__BaseUrl=${TABLEAU_BASE_URL}
+      - Tableau__SiteId=${TABLEAU_SITE_ID}
+    depends_on: [ rabbitmq, mongo ]
+    restart: unless-stopped
+    networks:
+      - review-net
+
+  webapp:
+    build:
+      context: .
+      dockerfile: WebApp/Dockerfile
+    env_file: .env
+    environment:
+      - ApiGateway__BaseUrl=${API_GATEWAY_BASE_URL}
+      - Tableau__DashboardUrl=${TABLEAU_DASHBOARD_URL}
+    depends_on: [ apigateway ]
+    restart: unless-stopped
+    networks:
+      - review-net
+
+  apigateway:
+    build:
+      context: .
+      dockerfile: ApiGateway/Dockerfile
+    env_file: .env
+    environment:
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - Jwt__Key=${JWT_SECRET}
+      - RateLimiting__PermitLimit=${RATE_LIMIT_PERMIT}
+      - RateLimiting__WindowSeconds=${RATE_LIMIT_WINDOW}
+    ports:
+      - "80:8080"
+    depends_on:
+      - scraper-rozetka
+      - historyservice
+      - analysisservice
+      - tableauexporter
+    restart: unless-stopped
+    networks:
+      - review-net
+
+volumes:
+  postgres-data:
+  mssql-data:
+  mongo-data:
+
+
+networks:
+  review-net:
+    driver: bridge

@@ -1,0 +1,17 @@
+﻿@inject IMediator Mediator
+
+<EditForm Model="_model" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <InputText @bind-Value="_model.Url" placeholder="Введіть URL товару" class="form-control" />
+    <button type="submit" class="btn btn-primary mt-2">Аналізувати</button>
+</EditForm>
+
+@code {
+    private AnalyzeRequestModel _model = new();
+
+    private async Task HandleSubmit()
+    {
+        await Mediator.Send(new AnalyzeProductCommand(_model));
+    }
+}

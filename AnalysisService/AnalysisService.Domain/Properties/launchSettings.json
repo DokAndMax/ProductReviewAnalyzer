@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AnalysisService.Domain": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

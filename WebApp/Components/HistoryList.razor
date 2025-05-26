@@ -1,0 +1,41 @@
+﻿@inject IMediator Mediator
+
+@if (_history is null)
+{
+    <p>Завантаження історії…</p>
+}
+else if (!_history.Any())
+{
+    <p>Історія порожня.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>URL</th>
+            <th>Час</th>
+            <th>Статус</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in _history)
+        {
+            <tr>
+                <td>@item.Url</td>
+                <td>@item.RequestedAtUtc.ToLocalTime()</td>
+                <td>@item.Status</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<HistoryRecordDto>? _history;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _history = await Mediator.Send(new GetHistoryQuery());
+    }
+}

@@ -1,0 +1,94 @@
+{
+  "ReverseProxy": {
+    "Routes": {
+      "scraper-rozetka": {
+        "ClusterId": "scraper-rozetka",
+        "AuthorizationPolicy": "ApiPolicy",
+        "Match": {
+          "Path": "/api/scraper/rozetka/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/scraper/rozetka" }
+        ]
+      },
+      "scraper-allo": {
+        "ClusterId": "scraper-allo",
+        "AuthorizationPolicy": "ApiPolicy",
+        "Match": {
+          "Path": "/api/scraper/allo/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/scraper/allo" }
+        ]
+      },
+      "history": {
+        "ClusterId": "history",
+        "AuthorizationPolicy": "ApiPolicy",
+        "Match": {
+          "Path": "/api/history/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/history" }
+        ]
+      },
+      "analysis": {
+        "ClusterId": "analysis",
+        "AuthorizationPolicy": "ApiPolicy",
+        "Match": {
+          "Path": "/api/analysis/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/analysis" }
+        ]
+      },
+      "tableau": {
+        "ClusterId": "tableau",
+        "AuthorizationPolicy": "ApiPolicy",
+        "Match": {
+          "Path": "/api/tableau/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/tableau" }
+        ]
+      },
+      "webapp": {
+        "ClusterId": "webapp",
+        "Match": {
+          "Path": "/{**catch-all}"
+        }
+      }
+    },
+    "Clusters": {
+      "scraper-rozetka": {
+        "Destinations": {
+          "d1": { "Address": "http://scraper-rozetka:8080/api/scraper/rozetka/" }
+        }
+      },
+      "scraper-allo": {
+        "Destinations": {
+          "d1": { "Address": "http://scraper-allo:8080/" }
+        }
+      },
+      "history": {
+        "Destinations": {
+          "d1": { "Address": "http://historyservice:8080/api/history/" }
+        }
+      },
+      "analysis": {
+        "Destinations": {
+          "d1": { "Address": "http://analysisservice:8080/" }
+        }
+      },
+      "tableau": {
+        "Destinations": {
+          "d1": { "Address": "http://tableauexporter:8080/" }
+        }
+      },
+      "webapp": {
+        "Destinations": {
+          "d1": { "Address": "http://webapp:8080/" }
+        }
+      }
+    }
+  }
+}
