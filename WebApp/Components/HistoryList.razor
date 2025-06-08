@@ -1,30 +1,47 @@
-﻿@inject IMediator Mediator
+﻿@using ProductReviewAnalyzer.AnalysisTrackerService.Domain.ValueObjects
+@using Microsoft.AspNetCore.Components.Routing
+@inject IMediator Mediator
+@inject UserSession Session
+
 
 @if (_history is null)
 {
-    <p>Завантаження історії…</p>
+    <p>Завантаження…</p>
 }
 else if (!_history.Any())
 {
-    <p>Історія порожня.</p>
+    <p>Поки що порожньо.</p>
 }
 else
 {
     <table class="table">
         <thead>
         <tr>
-            <th>URL</th>
-            <th>Час</th>
+            <th>Дата</th>
             <th>Статус</th>
+            <th>URL(и)</th>
+            <th></th>
         </tr>
         </thead>
         <tbody>
-        @foreach (var item in _history)
+        @foreach (var h in _history)
         {
             <tr>
-                <td>@item.Url</td>
-                <td>@item.RequestedAtUtc.ToLocalTime()</td>
-                <td>@item.Status</td>
+                <td>@h.CreatedAtUtc.ToLocalTime()</td>
+                <td>@h.Status</td>
+                <td>
+                    @foreach (var u in h.ProductUrls)
+                    {
+                        <div>@u</div>
+                    }
+                </td>
+                    <td class="text-end align-middle">
+                        <NavLink class="btn btn-primary"
+                                 href="@($"/req/{h.Id}")"
+                                 Match="NavLinkMatch.All">
+                            Переглянути
+                        </NavLink>
+                    </td>
             </tr>
         }
         </tbody>
@@ -32,10 +49,37 @@ else
 }
 
 @code {
-    private List<HistoryRecordDto>? _history;
+    [Parameter] public bool AllUsers { get; set; }
+    private List<AnalysisRequestDto>? _history;
+    private bool _firstRender = true;
+    private bool _disposed;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        _history = await Mediator.Send(new GetHistoryQuery());
+        _disposed = false;
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_firstRender)
+        {
+            _firstRender = false;
+
+            var userId = await Session.GetUserIdAsync();
+
+            if (_disposed) return; // Don't continue if disposed
+
+            _history = await Mediator.Send(new GetHistoryQuery(AllUsers is false ? userId : null));
+
+            if (!_disposed)
+            {
+                StateHasChanged();
+            }
+        }
     }
 }

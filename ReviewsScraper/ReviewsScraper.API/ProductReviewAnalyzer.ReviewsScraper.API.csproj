@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>9c39b238-21e9-40ac-b3de-8c479a6af1f0</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ReviewsScraper.Allo\ProductReviewAnalyzer.ReviewsScraper.Allo.csproj" />
+    <ProjectReference Include="..\ReviewsScraper.Foxtrot\ProductReviewAnalyzer.ReviewsScraper.Foxtrot.csproj" />
+    <ProjectReference Include="..\ReviewsScraper.Rozetka\ProductReviewAnalyzer.ReviewsScraper.Rozetka.csproj" />
+  </ItemGroup>
+
+</Project>

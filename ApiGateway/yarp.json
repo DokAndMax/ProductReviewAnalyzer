@@ -2,7 +2,7 @@
   "ReverseProxy": {
     "Routes": {
       "scraper-rozetka": {
-        "ClusterId": "scraper-rozetka",
+        "ClusterId": "scraper-api",
         "AuthorizationPolicy": "ApiPolicy",
         "Match": {
           "Path": "/api/scraper/rozetka/{**catch-all}"
@@ -11,8 +11,18 @@
           { "PathRemovePrefix": "/api/scraper/rozetka" }
         ]
       },
+      "scraper-foxtrot": {
+        "ClusterId": "scraper-api",
+        "AuthorizationPolicy": "ApiPolicy",
+        "Match": {
+          "Path": "/api/scraper/foxtrot/{**catch-all}"
+        },
+        "Transforms": [
+          { "PathRemovePrefix": "/api/scraper/foxtrot" }
+        ]
+      },
       "scraper-allo": {
-        "ClusterId": "scraper-allo",
+        "ClusterId": "scraper-api",
         "AuthorizationPolicy": "ApiPolicy",
         "Match": {
           "Path": "/api/scraper/allo/{**catch-all}"
@@ -21,14 +31,14 @@
           { "PathRemovePrefix": "/api/scraper/allo" }
         ]
       },
-      "history": {
-        "ClusterId": "history",
+      "requests": {
+        "ClusterId": "requests",
         "AuthorizationPolicy": "ApiPolicy",
         "Match": {
-          "Path": "/api/history/{**catch-all}"
+          "Path": "/api/requests/{**catch-all}"
         },
         "Transforms": [
-          { "PathRemovePrefix": "/api/history" }
+          { "PathRemovePrefix": "/api/requests" }
         ]
       },
       "analysis": {
@@ -59,19 +69,14 @@
       }
     },
     "Clusters": {
-      "scraper-rozetka": {
+      "scraper-api": {
         "Destinations": {
-          "d1": { "Address": "http://scraper-rozetka:8080/api/scraper/rozetka/" }
+          "d1": { "Address": "http://scraper-api:8080/" }
         }
       },
-      "scraper-allo": {
+      "requests": {
         "Destinations": {
-          "d1": { "Address": "http://scraper-allo:8080/" }
-        }
-      },
-      "history": {
-        "Destinations": {
-          "d1": { "Address": "http://historyservice:8080/api/history/" }
+          "d1": { "Address": "http://requestsservice:8080/api/requests/" }
         }
       },
       "analysis": {
@@ -81,7 +86,7 @@
       },
       "tableau": {
         "Destinations": {
-          "d1": { "Address": "http://tableauexporter:8080/" }
+          "d1": { "Address": "http://tableauexporter:8080/api/tableau/" }
         }
       },
       "webapp": {

@@ -1,0 +1,106 @@
+﻿@page "/req/{Id:guid}"
+@using Microsoft.AspNetCore.SignalR.Client
+@using ProductReviewAnalyzer.AnalysisTrackerService.Domain.ValueObjects
+@using ProductReviewAnalyzer.WebApp.Services
+@using ProductReviewAnalyzer.WebApp.Shared.Models
+@inject NavigationManager Nav
+@inject UserSession Session
+@inject IApiGatewayClient QueryClient
+@inject IConfiguration Configuration
+
+<button class="btn btn-link mb-3" @onclick="NavigateHome">
+    На головну
+</button>
+
+@if (_isLoading)
+{
+    <h3>Завантаження статусу запиту…</h3>
+}
+else if (!string.IsNullOrEmpty(_dashboardUrl))
+{
+    <TableauDashboard DashboardUrl="@_dashboardUrl" />
+}
+else
+{
+    <h3>Очікування аналізу…</h3>
+    <p><em>Зачекайте, йде обробка…</em></p>
+}
+
+@code {
+    [Inject] private ILogger<Request> Logger { get; set; } = default!;
+    [Parameter] public Guid Id { get; set; }
+
+    private HubConnection? _hub;
+    private string? _dashboardUrl;
+    private bool _isLoading = true;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await TryFetchInitialStatusAsync();
+
+        _isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && string.IsNullOrEmpty(_dashboardUrl))
+        {
+            await InitializeHubConnectionAsync();
+        }
+    }
+
+    private async Task TryFetchInitialStatusAsync()
+    {
+        try
+        {
+            var dto = await QueryClient.GetByIdAsync(Id);
+            if (dto.Status == RequestStatus.Success && !string.IsNullOrEmpty(dto.DashboardUrl))
+            {
+                _dashboardUrl = dto.DashboardUrl;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error fetching initial status: RequestId={RequestId}", Id);
+        }
+    }
+
+    private async Task InitializeHubConnectionAsync()
+    {
+        var baseUrl = Configuration["RequestTracker:BaseUrl"] ??
+            throw new InvalidOperationException("RequestTracker:BaseUrl string not configured");
+
+        var userId = await Session.GetUserIdAsync();
+        var hubUrl = Nav.ToAbsoluteUri($"{baseUrl}/ws/analysis?userId={userId}");
+
+        _hub = new HubConnectionBuilder()
+            .WithUrl(hubUrl)
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hub.On<Guid, string, int>("RequestCompleted", (reqId, dashboardUrl, status) =>
+        {
+            if (reqId == Id)
+            {
+                _dashboardUrl = dashboardUrl;
+                InvokeAsync(StateHasChanged);
+            }
+        });
+
+        await _hub.StartAsync();
+    }
+
+    private void NavigateHome()
+    {
+        Nav.NavigateTo("/");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hub is not null)
+        {
+            await _hub.DisposeAsync();
+        }
+    }
+}

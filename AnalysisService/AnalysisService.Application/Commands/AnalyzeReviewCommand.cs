@@ -1,12 +1,12 @@
 ﻿using MediatR;
 namespace ProductReviewAnalyzer.AnalysisService.Application.Commands;
 
-/// <summary>
-/// Команда запускає LLM-аналіз конкретного відгуку
-/// </summary>
 public sealed record AnalyzeReviewCommand(
+    Guid RequestId,
     long ReviewId,
     long ProductId,
+    string ProductTitle,
+    string Store,
     string UserTitle,
     int? Mark,
     string Text,

@@ -33,7 +33,8 @@ builder.Services
 
 builder.Services.AddAuthorization(opts =>
     opts.AddPolicy("ApiPolicy", policy =>
-        policy.RequireAuthenticatedUser()));
+        //policy.RequireAuthenticatedUser()));
+        policy.RequireAssertion(_ => true)));
 
 
 var rlCfg = builder.Configuration.GetSection("RateLimiting");
@@ -58,8 +59,8 @@ builder.Services
 var app = builder.Build();
 
 app.UseRateLimiter();
-app.UseAuthentication();
-app.UseAuthorization();
+//app.UseAuthentication();
+//app.UseAuthorization();
 
 app.MapReverseProxy();
 

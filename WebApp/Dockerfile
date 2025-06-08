@@ -7,10 +7,10 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["WebApp/ProductReviewAnalyzer.WebApp.csproj", "WebApp/"]
-COPY ["HistoryService/HistoryService.API/ProductReviewAnalyzer.HistoryService.API.csproj", "HistoryService/HistoryService.API/"]
-COPY ["HistoryService/HistoryService.Application/ProductReviewAnalyzer.HistoryService.Application.csproj", "HistoryService/HistoryService.Application/"]
-COPY ["HistoryService/HistoryService.Domain/ProductReviewAnalyzer.HistoryService.Domain.csproj", "HistoryService/HistoryService.Domain/"]
-COPY ["HistoryService/HistoryService.Infrastructure/ProductReviewAnalyzer.HistoryService.Infrastructure.csproj", "HistoryService/HistoryService.Infrastructure/"]
+COPY ["AnalysisTrackerService/AnalysisTrackerService.API/ProductReviewAnalyzer.AnalysisTrackerService.API.csproj", "AnalysisTrackerService/AnalysisTrackerService.API/"]
+COPY ["AnalysisTrackerService/AnalysisTrackerService.Application/ProductReviewAnalyzer.AnalysisTrackerService.Application.csproj", "AnalysisTrackerService/AnalysisTrackerService.Application/"]
+COPY ["AnalysisTrackerService/AnalysisTrackerService.Domain/ProductReviewAnalyzer.AnalysisTrackerService.Domain.csproj", "AnalysisTrackerService/AnalysisTrackerService.Domain/"]
+COPY ["AnalysisTrackerService/AnalysisTrackerService.Infrastructure/ProductReviewAnalyzer.AnalysisTrackerService.Infrastructure.csproj", "AnalysisTrackerService/AnalysisTrackerService.Infrastructure/"]
 COPY ["Common/ProductReviewAnalyzer.Common.csproj", "Common/"]
 COPY ["ReviewsScraper.Rozetka/ProductReviewAnalyzer.ReviewsScraper.Rozetka.csproj", "ReviewsScraper.Rozetka/"]
 COPY ["Contracts/ProductReviewAnalyzer.Contracts.csproj", "Contracts/"]

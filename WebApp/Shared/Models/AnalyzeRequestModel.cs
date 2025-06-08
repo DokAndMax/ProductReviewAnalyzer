@@ -4,7 +4,6 @@ namespace ProductReviewAnalyzer.WebApp.Shared.Models;
 
 public class AnalyzeRequestModel
 {
-    [Required(ErrorMessage = "URL обов’язковий")]
-    [Url(ErrorMessage = "Неправильний формат URL")]
-    public string Url { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Поле не може бути порожнім")]
+    public string Urls { get; set; } = string.Empty;
 }

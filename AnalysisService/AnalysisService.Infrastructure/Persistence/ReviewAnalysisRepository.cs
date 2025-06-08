@@ -4,14 +4,20 @@ using ProductReviewAnalyzer.AnalysisService.Domain.Entities;
 
 namespace ProductReviewAnalyzer.AnalysisService.Infrastructure.Persistence;
 
-internal sealed class ReviewAnalysisRepository : IReviewAnalysisRepository
+internal sealed class ReviewAnalysisRepository(IDocumentSession session) : IReviewAnalysisRepository
 {
-    private readonly IDocumentSession _session;
-    public ReviewAnalysisRepository(IDocumentSession session) => _session = session;
+    private readonly IDocumentSession session = session;
 
     public async Task InsertAsync(ReviewAnalysis entity, CancellationToken ct)
     {
-        _session.Store(entity);
-        await _session.SaveChangesAsync(ct);
+        session.Store(entity);
+        await session.SaveChangesAsync(ct);
+    }
+
+    public async Task<ReviewAnalysis?> FindByReviewIdAndStoreAsync(long reviewId, string store, CancellationToken ct)
+    {
+        return await session.Query<ReviewAnalysis>()
+            .Where(r => r.ReviewId == reviewId && r.Store == store)
+            .FirstOrDefaultAsync(ct);
     }
 }

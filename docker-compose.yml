@@ -3,6 +3,9 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -14,9 +17,9 @@ services:
     image: postgres:16-alpine
     container_name: postgres
     environment:
-      POSTGRES_DB: analysisdb
-      POSTGRES_USER: analysis
-      POSTGRES_PASSWORD: analysis
+      - POSTGRES_DB=${ANALYSIS_DB_NAME}
+      - POSTGRES_USER=${ANALYSIS_DB_USER}
+      - POSTGRES_PASSWORD=${ANALYSIS_DB_PASS}
     volumes: [ "postgres-data:/var/lib/postgresql/data" ]
     ports: [ "5432:5432" ]
     restart: unless-stopped
@@ -27,9 +30,9 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: sqlserver
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "Your_password123"
-      MSSQL_PID: "Express"
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${SQL_SERVER_PASSWORD}
+      - MSSQL_PID=Express
     ports: [ "1433:1433" ]
     volumes: [ "mssql-data:/var/opt/mssql" ]
     restart: unless-stopped
@@ -62,6 +65,7 @@ services:
     environment:
       - ConnectionStrings__RabbitMQ=${RABBITMQ_URI}
       - ConnectionStrings__Postgres=${ANALYSIS_DB_URI}
+      - OpenAI__BaseUrl=https://api.openai.com
       - OpenAI__ApiKey=${OPENAI_API_KEY}
       - OpenAI__Model=${OPENAI_MODEL}
     depends_on: [ rabbitmq, postgres ]
@@ -69,29 +73,33 @@ services:
     networks:
       - review-net
 
-  historyservice:
+  requestsservice:
     build:
       context: .
-      dockerfile: HistoryService/HistoryService.API/Dockerfile
+      dockerfile: analysistrackerservice/AnalysisTrackerService.API/Dockerfile
     env_file: .env
     environment:
-      - ConnectionStrings__SqlServer=${HISTORY_SQL_URI}
+      - ConnectionStrings__RabbitMQ=${RABBITMQ_URI}
+      - ConnectionStrings__SqlServer=${REQUESTS_SQL_URI}
+      - Scrapers__rozetka__BaseUrl=http://scraper-api:8080
+      - Scrapers__foxtrot__BaseUrl=http://scraper-api:8080
+      - Scrapers__allo__BaseUrl=http://scraper-api:8080
     depends_on: [ sqlserver ]
     restart: unless-stopped
     networks:
       - review-net
 
-  scraper-rozetka:
+  scraper-api:
     build:
       context: .
-      dockerfile: ReviewsScraper.Rozetka/Dockerfile
+      dockerfile: ReviewsScraper/ReviewsScraper.API/Dockerfile
     env_file: .env
     environment:
-      - RabbitMq__Host=${RABBITMQ_HOST}
-      - RabbitMq__Username=${RABBITMQ_USER}
-      - RabbitMq__Password=${RABBITMQ_PASS}
-      - ConnectionStrings__SqlServer=${ROZETKA_SQL_URI}
+      - ConnectionStrings__RabbitMQ=${RABBITMQ_URI}
+      - ConnectionStrings__SqlServer=${REVIEWS_SQL_URI}
       - RozetkaApi__BaseUrl=${ROZETKA_API_BASE_URL}
+      - FoxtrotApi__BaseUrl=${FOXTROT_API_BASE_URL}
+      - AlloApi__BaseUrl=${ALLO_API_BASE_URL}
       - Cache__Redis=${REDIS_URI}
     depends_on: [ sqlserver, rabbitmq, redis ]
     restart: unless-stopped
@@ -106,9 +114,12 @@ services:
     environment:
       - ConnectionStrings__RabbitMQ=${RABBITMQ_URI}
       - ConnectionStrings__Mongo=${MONGO_URI}
-      - Tableau__ApiToken=${TABLEAU_API_TOKEN}
+      - Tableau__PATName=${TABLEAU_PAT_NAME}
+      - Tableau__PATSecret=${TABLEAU_PAT_SECRET}
       - Tableau__BaseUrl=${TABLEAU_BASE_URL}
       - Tableau__SiteId=${TABLEAU_SITE_ID}
+      - Tableau__ProjectId=${TABLEAU_PROJECT_ID}
+      - Tableau__TwbTemplatePath=./Templates/Template.twb
     depends_on: [ rabbitmq, mongo ]
     restart: unless-stopped
     networks:
@@ -122,6 +133,7 @@ services:
     environment:
       - ApiGateway__BaseUrl=${API_GATEWAY_BASE_URL}
       - Tableau__DashboardUrl=${TABLEAU_DASHBOARD_URL}
+      - RequestTracker__BaseUrl=http://requestsservice:8080
     depends_on: [ apigateway ]
     restart: unless-stopped
     networks:
@@ -141,8 +153,8 @@ services:
     ports:
       - "80:8080"
     depends_on:
-      - scraper-rozetka
-      - historyservice
+      - scraper-api
+      - requestsservice
       - analysisservice
       - tableauexporter
     restart: unless-stopped

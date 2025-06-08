@@ -7,9 +7,12 @@ public class AnalyzeRequestModelValidator : AbstractValidator<AnalyzeRequestMode
 {
     public AnalyzeRequestModelValidator()
     {
-        RuleFor(x => x.Url)
-            .NotEmpty().WithMessage("URL не може бути порожнім")
-            .Must(u => Uri.IsWellFormedUriString(u, UriKind.Absolute))
-            .WithMessage("Невірний формат URL");
+        RuleFor(x => x.Urls)
+            .NotEmpty().WithMessage("URL обов’язкові")
+            .Must(text =>
+            {
+                var lines = text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+                return lines.All(u => Uri.IsWellFormedUriString(u.Trim(), UriKind.Absolute));
+            }).WithMessage("Список містить некоректні URL");
     }
 }

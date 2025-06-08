@@ -1,0 +1,18 @@
+﻿@typeparam TModel
+@typeparam TValue
+
+<InputTextArea @bind-Value="UrlsRaw"
+               class="form-control"
+               placeholder="Один URL у кожному рядку" />
+
+@code {
+    [Parameter] public List<string> Urls { get; set; } = null!;
+    private string UrlsRaw
+    {
+        get => string.Join(Environment.NewLine, Urls);
+        set => Urls = value
+            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim())
+            .ToList();
+    }
+}

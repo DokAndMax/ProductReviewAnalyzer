@@ -8,6 +8,6 @@ public class MappingProfile : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<AnalyzeRequestModel, AnalyzeRequestModel>();
-        config.NewConfig<HistoryRecordDto, HistoryRecordDto>();
+        config.NewConfig<CreateRequestDto, CreateRequestDto>();
     }
 }

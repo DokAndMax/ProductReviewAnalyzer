@@ -9,16 +9,21 @@ namespace ProductReviewAnalyzer.WebApp.Shared.UI.Handlers;
 public class AnalyzeProductCommandHandler(
     IApiGatewayClient api,
     IValidator<AnalyzeRequestModel> validator)
-    : IRequestHandler<AnalyzeProductCommand, Unit>
+    : IRequestHandler<AnalyzeProductCommand, Guid>
 {
-    public async Task<Unit> Handle(AnalyzeProductCommand cmd, CancellationToken ct)
+    public async Task<Guid> Handle(AnalyzeProductCommand cmd, CancellationToken ct)
     {
         var model = cmd.Request;
         var validation = await validator.ValidateAsync(model, ct);
         if (!validation.IsValid)
             throw new ValidationException(validation.Errors);
 
-        await api.ScrapeAsync(model);
-        return Unit.Value;
+        var urls = model.Urls.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+            .Select(u => u.Trim())
+            .ToList();
+
+        var dto = new CreateRequestDto(cmd.UserId, urls);
+        var resp = await api.CreateRequestAsync(dto);
+        return resp.Content.Id;
     }
 }

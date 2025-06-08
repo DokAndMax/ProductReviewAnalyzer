@@ -1,37 +1,39 @@
-using Mapster;
-using MapsterMapper;
-using MediatR;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Mapster;
+using MapsterMapper;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.DataProtection;
 using ProductReviewAnalyzer.WebApp.Services;
 using ProductReviewAnalyzer.WebApp.Shared.Mapping;
-using System.Reflection;
 using Refit;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// MediatR
+var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "DataProtectionKeys");
+Directory.CreateDirectory(keysFolder);
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
+    .SetApplicationName("ProductReviewAnalyzer.WebApp");
+
+builder.Services.AddScoped<ProtectedSessionStorage>();
+builder.Services.AddScoped<UserSession>();
+
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-// Mapster
-var config = TypeAdapterConfig.GlobalSettings;
-config.Apply(new MappingProfile());
-builder.Services.AddSingleton(config);
+var cfg = TypeAdapterConfig.GlobalSettings;
+cfg.Apply(new MappingProfile());
+builder.Services.AddSingleton(cfg);
 builder.Services.AddScoped<IMapper, ServiceMapper>();
 
-// FluentValidation
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
 
-// Http Clients (API Gateway REST)
 builder.Services.AddRefitClient<IApiGatewayClient>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(builder.Configuration["ApiGateway:BaseUrl"]!));
 
-// UI Services
-//builder.Services.AddScoped<IApiGatewayClient, ApiGatewayClient>();
-
-// Blazor Server
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 

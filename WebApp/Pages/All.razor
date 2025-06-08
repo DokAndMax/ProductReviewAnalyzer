@@ -1,0 +1,8 @@
+﻿@page "/all"
+@inject NavigationManager Nav
+
+<h3>Історія всіх запитів</h3>
+
+<HistoryList AllUsers="true" />
+
+<button class="btn btn-link" @onclick='() => Nav.NavigateTo("/")'>На головну</button>

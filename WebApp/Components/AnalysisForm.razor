@@ -1,17 +1,103 @@
-﻿@inject IMediator Mediator
+﻿@using Microsoft.AspNetCore.Components.Forms
+@inject UserSession Session
+@inject IMediator Mediator
+@inject NavigationManager Nav
 
-<EditForm Model="_model" OnValidSubmit="HandleSubmit">
+
+<EditForm Model="_modelWrapper" OnValidSubmit="HandleValidSubmit">
     <DataAnnotationsValidator />
-    <ValidationSummary />
-    <InputText @bind-Value="_model.Url" placeholder="Введіть URL товару" class="form-control" />
-    <button type="submit" class="btn btn-primary mt-2">Аналізувати</button>
+
+    <div class="mb-3">
+        @for (var i = 0; i < _modelWrapper.Urls.Count; i++)
+        {
+            var url = _modelWrapper.Urls[i];
+            <div class="input-group mb-2" @key="url.Id">
+                <input @bind="url.Value"
+                @bind:event="oninput"
+                class="form-control"
+                placeholder="Введіть URL" />
+
+                @if (i == _modelWrapper.Urls.Count - 1)
+                {
+                    <button type="button"
+                    class="btn btn-outline-secondary"
+                    @onclick="AddField"
+                    title="Додати ще одне поле">
+                        +
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger">@_errorMessage</div>
+    }
+
+    <button type="submit" class="btn btn-primary">Аналізувати</button>
 </EditForm>
 
 @code {
-    private AnalyzeRequestModel _model = new();
+    private UrlListWrapper _modelWrapper = new();
 
-    private async Task HandleSubmit()
+    private string _errorMessage = string.Empty;
+
+    private void AddField()
     {
-        await Mediator.Send(new AnalyzeProductCommand(_model));
+        _modelWrapper.Urls.Add(new UrlEntry());
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        _errorMessage = string.Empty;
+
+        var cleanList = _modelWrapper.Urls
+            .Select(e => e.Value?.Trim())
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .ToList();
+
+        if (!cleanList.Any())
+        {
+            _errorMessage = "Будь ласка, введіть хоча б один URL";
+            return;
+        }
+
+        var dtoModel = new AnalyzeRequestModel
+            {
+                Urls = string.Join(Environment.NewLine, cleanList)
+            };
+
+
+        Guid userId = await Session.GetUserIdAsync();
+        try
+        {
+            var newId = await Mediator.Send(new AnalyzeProductCommand(dtoModel, userId));
+            Nav.NavigateTo($"/req/{newId}");
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            _errorMessage = ex.Errors.FirstOrDefault()?.ErrorMessage ?? "Невідома помилка валідації";
+        }
+        catch (Refit.ApiException apiEx)
+        {
+            _errorMessage = $"Помилка звернення до API: {apiEx.Message}";
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Несподівана помилка: {ex.Message}";
+        }
+    }
+
+    private class UrlListWrapper
+    {
+        public List<UrlEntry> Urls { get; set; } = new() { new UrlEntry() };
+    }
+
+    private class UrlEntry
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+
+        public string Value { get; set; } = string.Empty;
     }
 }

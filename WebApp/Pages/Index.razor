@@ -1,17 +1,17 @@
 ﻿@page "/"
-@using ProductReviewAnalyzer.WebApp.Shared.Models
-@inject IConfiguration Configuration
+@inject NavigationManager Nav
 
 <h3>Аналіз відгуків товару</h3>
 
 <AnalysisForm />
 
 <hr />
+<h4>Моя історія запитів</h4>
+<HistoryList AllUsers="false" />
 
-<h4>Історія запитів</h4>
-<HistoryList />
+<h4 class="mt-4">Історія інших користувачів</h4>
+<HistoryList AllUsers="true" />
 
-<hr />
-
-<h4>Dashboard</h4>
-<TableauDashboard DashboardUrl="@Configuration["Tableau:DashboardUrl"]" />
+<button class="btn btn-link mt-3" @onclick='() => Nav.NavigateTo("/all")'>
+    Повноекранний перегляд історії
+</button>

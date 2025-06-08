@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Marten" Version="7.40.4" />
+    <PackageReference Include="Marten" Version="8.1.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.5" />
-    <PackageReference Include="Weasel.Core" Version="7.14.2" />
+    <PackageReference Include="Weasel.Core" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

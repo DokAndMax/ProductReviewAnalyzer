@@ -1,4 +1,21 @@
-﻿@code {
-    [Parameter] public string DashboardUrl { get; set; } = "";
+﻿@using Microsoft.AspNetCore.Components
+<div>
+    @if (string.IsNullOrEmpty(DashboardUrl))
+    {
+        <p><em>Порожній URL для візуалізації Tableau.</em></p>
+    }
+    else
+    {
+        <!-- Безпосередньо вбудовуємо веб-компонент tableau-viz -->
+        <tableau-viz
+            src="@DashboardUrl"
+            style="width:100%; height:800px;"
+            hide-tabs="true"
+            hide-toolbar="true">
+        </tableau-viz>
+    }
+</div>
+
+@code {
+    [Parameter] public string DashboardUrl { get; set; } = string.Empty;
 }
-<iframe src="@DashboardUrl" style="width:100%;height:800px;border:none;"></iframe>
